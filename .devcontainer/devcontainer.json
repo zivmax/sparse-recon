@@ -22,7 +22,7 @@
 				"w88975.code-translate",
 			]
 		}
-	}
+	},
 	"runArgs": [
 		"--gpus",
 		"all"
