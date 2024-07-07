@@ -1,0 +1,7 @@
+numpy
+nibabel
+scipy
+pyyaml
+tensorboard
+torch
+
