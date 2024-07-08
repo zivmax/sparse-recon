@@ -132,3 +132,10 @@ dmypy.json
 .pyre/
 
 .DS_Store
+
+# The data set
+casename_files/oai-zib/classification
+casename_files/oai-zib/segmentation
+casename_files/verse19/01_training
+casename_files/verse19/02_validation
+casename_files/verse19/03_test
