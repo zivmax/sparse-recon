@@ -22,15 +22,19 @@ from . import lookup_tables  # pylint: disable=relative-beyond-top-level
 def _assert_is_numpy_array(name, array):
     """Raises an exception if `array` is not a numpy array."""
     if not isinstance(array, np.ndarray):
-        raise ValueError("The argument {!r} should be a numpy array, not a "
-                         "{}".format(name, type(array)))
+        raise ValueError(
+            "The argument {!r} should be a numpy array, not a "
+            "{}".format(name, type(array))
+        )
 
 
 def _check_nd_numpy_array(name, array, num_dims):
     """Raises an exception if `array` is not a `num_dims`-D numpy array."""
     if len(array.shape) != num_dims:
-        raise ValueError("The argument {!r} should be a {}D array, not of "
-                         "shape {}".format(name, num_dims, array.shape))
+        raise ValueError(
+            "The argument {!r} should be a {}D array, not of "
+            "shape {}".format(name, num_dims, array.shape)
+        )
 
 
 def _check_2d_numpy_array(name, array):
@@ -44,8 +48,10 @@ def _check_3d_numpy_array(name, array):
 def _assert_is_bool_numpy_array(name, array):
     _assert_is_numpy_array(name, array)
     if array.dtype != bool:
-        raise ValueError("The argument {!r} should be a numpy array of type bool, "
-                         "not {}".format(name, array.dtype))
+        raise ValueError(
+            "The argument {!r} should be a numpy array of type bool, "
+            "not {}".format(name, array.dtype)
+        )
 
 
 def _compute_bounding_box(mask):
@@ -102,35 +108,42 @@ def _crop_to_bounding_box(mask, bbox_min, bbox_max):
     num_dims = len(mask.shape)
     # pyformat: disable
     if num_dims == 2:
-        cropmask[0:-1, 0:-1] = mask[bbox_min[0]:bbox_max[0] + 1,
-                                    bbox_min[1]:bbox_max[1] + 1]
+        cropmask[0:-1, 0:-1] = mask[
+            bbox_min[0] : bbox_max[0] + 1, bbox_min[1] : bbox_max[1] + 1
+        ]
     elif num_dims == 3:
-        cropmask[0:-1, 0:-1, 0:-1] = mask[bbox_min[0]:bbox_max[0] + 1,
-                                          bbox_min[1]:bbox_max[1] + 1,
-                                          bbox_min[2]:bbox_max[2] + 1]
+        cropmask[0:-1, 0:-1, 0:-1] = mask[
+            bbox_min[0] : bbox_max[0] + 1,
+            bbox_min[1] : bbox_max[1] + 1,
+            bbox_min[2] : bbox_max[2] + 1,
+        ]
     # pyformat: enable
     else:
-        raise ValueError(f'Unsupported dimensionality {num_dims}.')
+        raise ValueError(f"Unsupported dimensionality {num_dims}.")
 
     return cropmask
 
 
-def _crop_to_bounding_box_exact(mask: np.ndarray, bbox_min: np.ndarray,
-                                bbox_max: np.ndarray) -> np.ndarray:
+def _crop_to_bounding_box_exact(
+    mask: np.ndarray, bbox_min: np.ndarray, bbox_max: np.ndarray
+) -> np.ndarray:
     """Crop a 2D or 3D mask to given (inclusive) bounding box corners (without any
     additional padding).
     """
     num_dims = len(mask.shape)
     if num_dims == 2:
-        return mask[bbox_min[0]:bbox_max[0] + 1,
-                    bbox_min[1]:bbox_max[1] + 1]
+        return mask[bbox_min[0] : bbox_max[0] + 1, bbox_min[1] : bbox_max[1] + 1]
     elif num_dims == 3:
-        return mask[bbox_min[0]:bbox_max[0] + 1,
-                    bbox_min[1]:bbox_max[1] + 1,
-                    bbox_min[2]:bbox_max[2] + 1]
+        return mask[
+            bbox_min[0] : bbox_max[0] + 1,
+            bbox_min[1] : bbox_max[1] + 1,
+            bbox_min[2] : bbox_max[2] + 1,
+        ]
     else:
-        raise ValueError('Unsupported mask dimensionality, expected 2 or 3, '
-                         'instead got {}.'.format(num_dims))
+        raise ValueError(
+            "Unsupported mask dimensionality, expected 2 or 3, "
+            "instead got {}.".format(num_dims)
+        )
 
 
 def _pad_once(mask: np.ndarray, do_zero_padding: bool = True) -> np.ndarray:
@@ -138,9 +151,9 @@ def _pad_once(mask: np.ndarray, do_zero_padding: bool = True) -> np.ndarray:
     nearest value. Padding occures only on positive axis direction.
     """
     if do_zero_padding:
-        mask_padded = np.pad(mask, 1, 'constant', constant_values=0)
+        mask_padded = np.pad(mask, 1, "constant", constant_values=0)
     else:
-        mask_padded = np.pad(mask, 1, 'edge')
+        mask_padded = np.pad(mask, 1, "edge")
     # Remove the padding on the negative axis direction
     num_dims = len(mask.shape)
     if num_dims == 2:
@@ -148,8 +161,10 @@ def _pad_once(mask: np.ndarray, do_zero_padding: bool = True) -> np.ndarray:
     elif num_dims == 3:
         return mask_padded[1:, 1:, 1:]
     else:
-        raise ValueError('Unsupported mask dimensionality, expected 2 or 3, '
-                         'instead got {}.'.format(num_dims))
+        raise ValueError(
+            "Unsupported mask dimensionality, expected 2 or 3, "
+            "instead got {}.".format(num_dims)
+        )
 
 
 def _sort_distances_surfels(distances, surfel_areas):
@@ -166,10 +181,9 @@ def _sort_distances_surfels(distances, surfel_areas):
     return sorted_surfels[:, 0], sorted_surfels[:, 1]
 
 
-def compute_surface_distances(mask_gt,
-                              mask_pred,
-                              spacing_mm,
-                              do_consider_boundary_voxels: bool = True):
+def compute_surface_distances(
+    mask_gt, mask_pred, spacing_mm, do_consider_boundary_voxels: bool = True
+):
     """Computes closest distances from all surface points to the other surface.
 
     This function can be applied to 2D or 3D tensors. For 2D, both masks must be
@@ -227,12 +241,17 @@ def compute_surface_distances(mask_gt,
     _assert_is_bool_numpy_array("mask_pred", mask_pred)
 
     if not len(mask_gt.shape) == len(mask_pred.shape) == len(spacing_mm):
-        raise ValueError("The arguments must be of compatible shape. Got mask_gt "
-                         "with {} dimensions ({}) and mask_pred with {} dimensions "
-                         "({}), while the spacing_mm was {} elements.".format(
-                            len(mask_gt.shape),
-                            mask_gt.shape, len(mask_pred.shape), mask_pred.shape,
-                            len(spacing_mm)))
+        raise ValueError(
+            "The arguments must be of compatible shape. Got mask_gt "
+            "with {} dimensions ({}) and mask_pred with {} dimensions "
+            "({}), while the spacing_mm was {} elements.".format(
+                len(mask_gt.shape),
+                mask_gt.shape,
+                len(mask_pred.shape),
+                mask_pred.shape,
+                len(spacing_mm),
+            )
+        )
 
     num_dims = len(spacing_mm)
     if num_dims == 2:
@@ -242,7 +261,8 @@ def compute_surface_distances(mask_gt,
         # compute the area for all 16 possible surface elements
         # (given a 2x2 neighbourhood) according to the spacing_mm
         neighbour_code_to_surface_area = (
-            lookup_tables.create_table_neighbour_code_to_contour_length(spacing_mm))
+            lookup_tables.create_table_neighbour_code_to_contour_length(spacing_mm)
+        )
         kernel = lookup_tables.ENCODE_NEIGHBOURHOOD_2D_KERNEL
         full_true_neighbours = 0b1111
     elif num_dims == 3:
@@ -252,12 +272,14 @@ def compute_surface_distances(mask_gt,
         # compute the area for all 256 possible surface elements
         # (given a 2x2x2 neighbourhood) according to the spacing_mm
         neighbour_code_to_surface_area = (
-            lookup_tables.create_table_neighbour_code_to_surface_area(spacing_mm))
+            lookup_tables.create_table_neighbour_code_to_surface_area(spacing_mm)
+        )
         kernel = lookup_tables.ENCODE_NEIGHBOURHOOD_3D_KERNEL
         full_true_neighbours = 0b11111111
     else:
-        raise ValueError("Only 2D and 3D masks are supported, not "
-                         "{}D.".format(num_dims))
+        raise ValueError(
+            "Only 2D and 3D masks are supported, not " "{}D.".format(num_dims)
+        )
 
     # compute the bounding box of the masks to trim the volume to the smallest
     # possible processing subvolume. these are inclusive bbox corner coords
@@ -292,39 +314,44 @@ def compute_surface_distances(mask_gt,
     # i.e. the points are located at the corners of the original voxels
     if do_consider_boundary_voxels:
         neighbour_code_map_gt = ndimage.correlate(
-            cropmask_gt.astype(np.uint8), kernel, mode="constant", cval=0)
+            cropmask_gt.astype(np.uint8), kernel, mode="constant", cval=0
+        )
         neighbour_code_map_pred = ndimage.correlate(
-            cropmask_pred.astype(np.uint8), kernel, mode="constant", cval=0)
+            cropmask_pred.astype(np.uint8), kernel, mode="constant", cval=0
+        )
     else:
         neighbour_code_map_gt = ndimage.correlate(
-            cropmask_gt.astype(np.uint8), kernel, mode="nearest")
+            cropmask_gt.astype(np.uint8), kernel, mode="nearest"
+        )
         neighbour_code_map_pred = ndimage.correlate(
-            cropmask_pred.astype(np.uint8), kernel, mode="nearest")
+            cropmask_pred.astype(np.uint8), kernel, mode="nearest"
+        )
 
     # create masks with the surface voxels
-    borders_gt = ((neighbour_code_map_gt != 0) &
-                  (neighbour_code_map_gt != full_true_neighbours))
-    borders_pred = ((neighbour_code_map_pred != 0) &
-                    (neighbour_code_map_pred != full_true_neighbours))
+    borders_gt = (neighbour_code_map_gt != 0) & (
+        neighbour_code_map_gt != full_true_neighbours
+    )
+    borders_pred = (neighbour_code_map_pred != 0) & (
+        neighbour_code_map_pred != full_true_neighbours
+    )
 
     # compute the distance transform (closest distance of each voxel to the
     # surface voxels)
     if borders_gt.any():
-        distmap_gt = ndimage.distance_transform_edt(
-            ~borders_gt, sampling=spacing_mm)
+        distmap_gt = ndimage.distance_transform_edt(~borders_gt, sampling=spacing_mm)
     else:
         distmap_gt = np.Inf * np.ones(borders_gt.shape)
 
     if borders_pred.any():
         distmap_pred = ndimage.distance_transform_edt(
-            ~borders_pred, sampling=spacing_mm)
+            ~borders_pred, sampling=spacing_mm
+        )
     else:
         distmap_pred = np.Inf * np.ones(borders_pred.shape)
 
     # compute the area of each surface element
     surface_area_map_gt = neighbour_code_to_surface_area[neighbour_code_map_gt]
-    surface_area_map_pred = neighbour_code_to_surface_area[
-        neighbour_code_map_pred]
+    surface_area_map_pred = neighbour_code_to_surface_area[neighbour_code_map_pred]
 
     # create a list of all surface elements with distance and area
     distances_gt_to_pred = distmap_pred[borders_gt]
@@ -335,11 +362,13 @@ def compute_surface_distances(mask_gt,
     # sort them by distance
     if distances_gt_to_pred.shape != (0,):
         distances_gt_to_pred, surfel_areas_gt = _sort_distances_surfels(
-            distances_gt_to_pred, surfel_areas_gt)
+            distances_gt_to_pred, surfel_areas_gt
+        )
 
     if distances_pred_to_gt.shape != (0,):
         distances_pred_to_gt, surfel_areas_pred = _sort_distances_surfels(
-            distances_pred_to_gt, surfel_areas_pred)
+            distances_pred_to_gt, surfel_areas_pred
+        )
 
     return {
         "distances_gt_to_pred": distances_gt_to_pred,
@@ -374,13 +403,15 @@ def compute_average_surface_distance(surface_distances):
     surfel_areas_pred = surface_distances["surfel_areas_pred"]
     # If no distances, return NaN
     if distances_gt_to_pred.size != 0:
-        average_distance_gt_to_pred = (
-                np.sum(distances_gt_to_pred * surfel_areas_gt) / np.sum(surfel_areas_gt))
+        average_distance_gt_to_pred = np.sum(
+            distances_gt_to_pred * surfel_areas_gt
+        ) / np.sum(surfel_areas_gt)
     else:
         average_distance_gt_to_pred = np.nan
     if distances_pred_to_gt.size != 0:
-        average_distance_pred_to_gt = (
-                np.sum(distances_pred_to_gt * surfel_areas_pred) / np.sum(surfel_areas_pred))
+        average_distance_pred_to_gt = np.sum(
+            distances_pred_to_gt * surfel_areas_pred
+        ) / np.sum(surfel_areas_pred)
     else:
         average_distance_pred_to_gt = np.nan
     return average_distance_gt_to_pred, average_distance_pred_to_gt
@@ -411,16 +442,17 @@ def compute_robust_hausdorff(surface_distances, percent):
         surfel_areas_cum_gt = np.cumsum(surfel_areas_gt) / np.sum(surfel_areas_gt)
         idx = np.searchsorted(surfel_areas_cum_gt, percent / 100.0)
         perc_distance_gt_to_pred = distances_gt_to_pred[
-            min(idx, len(distances_gt_to_pred) - 1)]
+            min(idx, len(distances_gt_to_pred) - 1)
+        ]
     else:
         perc_distance_gt_to_pred = np.Inf
 
     if len(distances_pred_to_gt) > 0:  # pylint: disable=g-explicit-length-test
-        surfel_areas_cum_pred = (np.cumsum(surfel_areas_pred) /
-                                 np.sum(surfel_areas_pred))
+        surfel_areas_cum_pred = np.cumsum(surfel_areas_pred) / np.sum(surfel_areas_pred)
         idx = np.searchsorted(surfel_areas_cum_pred, percent / 100.0)
         perc_distance_pred_to_gt = distances_pred_to_gt[
-            min(idx, len(distances_pred_to_gt) - 1)]
+            min(idx, len(distances_pred_to_gt) - 1)
+        ]
     else:
         perc_distance_pred_to_gt = np.Inf
 
@@ -450,15 +482,15 @@ def compute_surface_overlap_at_tolerance(surface_distances, tolerance_mm):
     surfel_areas_gt = surface_distances["surfel_areas_gt"]
     surfel_areas_pred = surface_distances["surfel_areas_pred"]
     if distances_gt_to_pred.size != 0:
-        rel_overlap_gt = (
-                np.sum(surfel_areas_gt[distances_gt_to_pred <= tolerance_mm]) /
-                np.sum(surfel_areas_gt))
+        rel_overlap_gt = np.sum(
+            surfel_areas_gt[distances_gt_to_pred <= tolerance_mm]
+        ) / np.sum(surfel_areas_gt)
     else:
         rel_overlap_gt = np.nan
     if distances_pred_to_gt.size != 0:
-        rel_overlap_pred = (
-                np.sum(surfel_areas_pred[distances_pred_to_gt <= tolerance_mm]) /
-                np.sum(surfel_areas_pred))
+        rel_overlap_pred = np.sum(
+            surfel_areas_pred[distances_pred_to_gt <= tolerance_mm]
+        ) / np.sum(surfel_areas_pred)
     else:
         rel_overlap_pred = np.nan
     return rel_overlap_gt, rel_overlap_pred
@@ -493,7 +525,8 @@ def compute_surface_dice_at_tolerance(surface_distances, tolerance_mm):
     overlap_gt = np.sum(surfel_areas_gt[distances_gt_to_pred <= tolerance_mm])
     overlap_pred = np.sum(surfel_areas_pred[distances_pred_to_gt <= tolerance_mm])
     surface_dice = (overlap_gt + overlap_pred) / (
-            np.sum(surfel_areas_gt) + np.sum(surfel_areas_pred))
+        np.sum(surfel_areas_gt) + np.sum(surfel_areas_pred)
+    )
     return surface_dice
 
 

@@ -3,8 +3,12 @@ from typing import Optional
 import torch
 
 
-def dice_coeff(probabilities: torch.Tensor, labels: torch.Tensor, threshold: Optional[float] = None,
-               reduction: Optional[str] = 'mean') -> torch.Tensor:
+def dice_coeff(
+    probabilities: torch.Tensor,
+    labels: torch.Tensor,
+    threshold: Optional[float] = None,
+    reduction: Optional[str] = "mean",
+) -> torch.Tensor:
     """Compute a mean hard or soft dice coefficient between a batch of probabilities and target
     labels. Reduction happens over the batch dimension; if None, return dice per example.
     """
@@ -18,11 +22,13 @@ def dice_coeff(probabilities: torch.Tensor, labels: torch.Tensor, threshold: Opt
     labels_flat = torch.flatten(labels, start_dim=1)
 
     intersection = (probabilities_flat * labels_flat).sum(dim=1)
-    volume_sum = probabilities_flat.sum(dim=1) + labels_flat.sum(dim=1)  # it's not the union!
-    dice = (2. * intersection + smooth) / (volume_sum + smooth)
-    if reduction == 'mean':
+    volume_sum = probabilities_flat.sum(dim=1) + labels_flat.sum(
+        dim=1
+    )  # it's not the union!
+    dice = (2.0 * intersection + smooth) / (volume_sum + smooth)
+    if reduction == "mean":
         dice = torch.mean(dice)
-    elif reduction == 'sum':
+    elif reduction == "sum":
         dice = torch.sum(dice)
 
     return dice
@@ -30,8 +36,13 @@ def dice_coeff(probabilities: torch.Tensor, labels: torch.Tensor, threshold: Opt
 
 class DiceLoss(torch.nn.Module):
     """Takes logits as input."""
-    def __init__(self, threshold: Optional[float] = None, reduction: Optional[str] = 'mean',
-                 do_report_metric: bool = False):
+
+    def __init__(
+        self,
+        threshold: Optional[float] = None,
+        reduction: Optional[str] = "mean",
+        do_report_metric: bool = False,
+    ):
         """If no threshold is given, soft dice is computed, otherwise the predicted values are
         thresholded. Reduction happens over the batch dimension; if None, return dice per example.
         If do_report_metric, report the dice score instead of the dice loss (1 - dice score).
@@ -39,7 +50,9 @@ class DiceLoss(torch.nn.Module):
         super().__init__()
 
         if not do_report_metric and threshold is not None:
-            raise ValueError('Dice metric should not use thresholding when used as a loss.')
+            raise ValueError(
+                "Dice metric should not use thresholding when used as a loss."
+            )
 
         self.threshold = threshold
         self.reduction = reduction
@@ -55,6 +68,7 @@ class DiceLoss(torch.nn.Module):
 
 class BCEWithDiceLoss(torch.nn.Module):
     """Weighted sum of Dice loss with binary cross-entropy."""
+
     def __init__(self, reduction: str, bce_weight: float = 1.0):
         super().__init__()
         self.dice = DiceLoss(None, reduction, False)

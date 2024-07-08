@@ -4,12 +4,16 @@ import torch
 
 
 class OccupancyPredictor(torch.nn.Module):
-    def __init__(self, latent_dim: int, spatial_dim: int, num_layers: int,
-                 layers_with_coords: List[int]):
+    def __init__(
+        self,
+        latent_dim: int,
+        spatial_dim: int,
+        num_layers: int,
+        layers_with_coords: List[int],
+    ):
         def block(num_ch_in: int, num_ch_out: int):
             return torch.nn.Sequential(
-                torch.nn.Linear(num_ch_in, num_ch_out),
-                torch.nn.ReLU(True)
+                torch.nn.Linear(num_ch_in, num_ch_out), torch.nn.ReLU(True)
             )
 
         super().__init__()
@@ -20,10 +24,13 @@ class OccupancyPredictor(torch.nn.Module):
         for lyr_id in self.layers_with_coords:
             in_channels[lyr_id] = channels_with_coords
         self.res_layers = torch.nn.ModuleList(
-            [block(in_channels[i], latent_dim) for i in range(num_layers - 1)])
+            [block(in_channels[i], latent_dim) for i in range(num_layers - 1)]
+        )
         self.last_layer = torch.nn.Linear(in_channels[-1], 1)
 
-    def forward(self, closest_latents: torch.Tensor, local_coords: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, closest_latents: torch.Tensor, local_coords: torch.Tensor
+    ) -> torch.Tensor:
         """Inputs have shape [B, *, Z] where Z is latent/spatial dimensionality. Return shape
         [B, *, 1]."""
         features = closest_latents
@@ -43,8 +50,15 @@ class OccupancyPredictor(torch.nn.Module):
 
 class AutoDecoder(torch.nn.Module):
     """Encoder-free implicit shape prediction."""
-    def __init__(self, lat_dim: int, spatial_dim: int, image_size: torch.Tensor,
-                 occnet_num_layers: int, occnet_layers_with_coords: List[int]):
+
+    def __init__(
+        self,
+        lat_dim: int,
+        spatial_dim: int,
+        image_size: torch.Tensor,
+        occnet_num_layers: int,
+        occnet_layers_with_coords: List[int],
+    ):
         """
         Implicit AutoDecoder.
 
@@ -56,14 +70,15 @@ class AutoDecoder(torch.nn.Module):
         """
         super().__init__()
         self.image_size: torch.Tensor
-        self.register_buffer('image_size', image_size)
+        self.register_buffer("image_size", image_size)
         # Global coordinates of the latent vector
         latent_coords: torch.Tensor = image_size / 2  # noqa
         self.latent_coords: torch.Tensor
-        self.register_buffer('latent_coords', latent_coords)
+        self.register_buffer("latent_coords", latent_coords)
         self.occp_pred: torch.nn.Module
-        self.occp_pred = OccupancyPredictor(lat_dim, spatial_dim, occnet_num_layers,
-                                            occnet_layers_with_coords)
+        self.occp_pred = OccupancyPredictor(
+            lat_dim, spatial_dim, occnet_num_layers, occnet_layers_with_coords
+        )
 
     def forward(self, latents: torch.Tensor, coordinates: torch.Tensor) -> torch.Tensor:
         """Latents have shape [B, Z]. Coordinates are in the global coord. system with shape
@@ -72,8 +87,9 @@ class AutoDecoder(torch.nn.Module):
         # Compute local coordinates w.r.t. the latent vector position.
         local_coords = coordinates - self.latent_coords
         latents = latents.unsqueeze(1).unsqueeze(1).unsqueeze(1)
-        latents = latents.expand(-1, coordinates.shape[1], coordinates.shape[2],
-                                 coordinates.shape[3], -1)
+        latents = latents.expand(
+            -1, coordinates.shape[1], coordinates.shape[2], coordinates.shape[3], -1
+        )
         predictions = self.occp_pred(latents, local_coords)
         # Remove the feature dim (MLP, channels-last)
         predictions = predictions.squeeze(4)
@@ -82,24 +98,32 @@ class AutoDecoder(torch.nn.Module):
 
 class ReconNet(torch.nn.Module):
     """Implementation taken from https://github.com/FedeTure/ReconNet"""
+
     def __init__(self):
-        def consecutive_conv(in_channels: int, out_channels: int,
-                             do_half_intermediate: bool = False):
-            interm_channels = int(out_channels / 2) if do_half_intermediate else in_channels
-            return torch.nn.Sequential(torch.nn.Conv3d(in_channels, interm_channels, 3, padding=1),
-                                       torch.nn.BatchNorm3d(interm_channels),
-                                       torch.nn.ReLU(inplace=True),
-                                       torch.nn.Conv3d(interm_channels, out_channels, 3, padding=1),
-                                       torch.nn.BatchNorm3d(out_channels),
-                                       torch.nn.ReLU(inplace=True))
+        def consecutive_conv(
+            in_channels: int, out_channels: int, do_half_intermediate: bool = False
+        ):
+            interm_channels = (
+                int(out_channels / 2) if do_half_intermediate else in_channels
+            )
+            return torch.nn.Sequential(
+                torch.nn.Conv3d(in_channels, interm_channels, 3, padding=1),
+                torch.nn.BatchNorm3d(interm_channels),
+                torch.nn.ReLU(inplace=True),
+                torch.nn.Conv3d(interm_channels, out_channels, 3, padding=1),
+                torch.nn.BatchNorm3d(out_channels),
+                torch.nn.ReLU(inplace=True),
+            )
 
         def consecutive_conv_up(in_channels: int, out_channels: int):
-            return torch.nn.Sequential(torch.nn.Conv3d(in_channels, out_channels, 3, padding=1),
-                                       torch.nn.BatchNorm3d(out_channels),
-                                       torch.nn.ReLU(inplace=True),
-                                       torch.nn.Conv3d(out_channels, out_channels, 3, padding=1),
-                                       torch.nn.BatchNorm3d(out_channels),
-                                       torch.nn.ReLU(inplace=True))
+            return torch.nn.Sequential(
+                torch.nn.Conv3d(in_channels, out_channels, 3, padding=1),
+                torch.nn.BatchNorm3d(out_channels),
+                torch.nn.ReLU(inplace=True),
+                torch.nn.Conv3d(out_channels, out_channels, 3, padding=1),
+                torch.nn.BatchNorm3d(out_channels),
+                torch.nn.ReLU(inplace=True),
+            )
 
         super().__init__()
 
@@ -110,12 +134,15 @@ class ReconNet(torch.nn.Module):
         self.conv_rest_x_32 = consecutive_conv(num_channels * 2, num_channels * 4)
         self.conv_rest_x_16 = consecutive_conv(num_channels * 4, num_channels * 8)
 
-        self.conv_rest_u_32 = consecutive_conv_up(num_channels * 8 + num_channels * 4,
-                                                  num_channels * 4)
-        self.conv_rest_u_64 = consecutive_conv_up(num_channels * 4 + num_channels * 2,
-                                                  num_channels * 2)
-        self.conv_rest_u_128 = consecutive_conv_up(num_channels * 2 + num_channels,
-                                                   num_channels)
+        self.conv_rest_u_32 = consecutive_conv_up(
+            num_channels * 8 + num_channels * 4, num_channels * 4
+        )
+        self.conv_rest_u_64 = consecutive_conv_up(
+            num_channels * 4 + num_channels * 2, num_channels * 2
+        )
+        self.conv_rest_u_128 = consecutive_conv_up(
+            num_channels * 2 + num_channels, num_channels
+        )
 
         # noinspection PyTypeChecker
         self.conv_final = torch.nn.Conv3d(num_channels, 1, 3, padding=1)
@@ -133,11 +160,15 @@ class ReconNet(torch.nn.Module):
         x_16 = self.conv_rest_x_16(x_16)  # rest 128->128->256
 
         u_32 = self.expand(x_16)
-        u_32 = self.conv_rest_u_32(torch.cat((x_32, u_32), 1))  # rest 256+128-> 128 -> 128
+        u_32 = self.conv_rest_u_32(
+            torch.cat((x_32, u_32), 1)
+        )  # rest 256+128-> 128 -> 128
         u_64 = self.expand(u_32)
         u_64 = self.conv_rest_u_64(torch.cat((x_64, u_64), 1))  # rest 128+64-> 64 -> 64
         u_128 = self.expand(u_64)
-        u_128 = self.conv_rest_u_128(torch.cat((x_128, u_128), 1))  # rest 64+32-> 32 -> 32
+        u_128 = self.conv_rest_u_128(
+            torch.cat((x_128, u_128), 1)
+        )  # rest 64+32-> 32 -> 32
         u_128 = self.conv_final(u_128)
 
         return u_128
