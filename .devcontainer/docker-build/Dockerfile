@@ -17,6 +17,7 @@ RUN apt install -y curl
 RUN apt install -y wget 
 RUN apt install -y systemd 
 RUN apt install -y git 
+RUN apt install -y p7zip-full
 
 # Clean up to reduce image size
 RUN apt clean && \
